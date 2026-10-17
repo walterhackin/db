@@ -255,15 +255,16 @@ SELECT
     g.GuestName,
     r.RoomNumber,
     c.CategoryName,
-    s.ServiceName,
-    bs.ServicePrice,
+    b.CheckInDate,
+    b.CheckOutDate,
     b.Total
-FROM dbo.BookingServices bs
-JOIN dbo.Bookings b ON b.BookingID = bs.BookingID
-JOIN dbo.Guests g ON g.GuestID = b.GuestID
-JOIN dbo.Rooms r ON r.RoomID = b.RoomID
-JOIN dbo.Categories c ON c.CategoryID = r.CategoryID
-JOIN dbo.Services s ON s.ServiceID = bs.ServiceID
+FROM dbo.Bookings b
+JOIN dbo.Guests g
+    ON g.GuestID = b.GuestID
+JOIN dbo.Rooms r
+    ON r.RoomID = b.RoomID
+JOIN dbo.Categories c
+    ON c.CategoryID = r.CategoryID
 ORDER BY b.BookingID;
 ```
 
