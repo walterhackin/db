@@ -35,10 +35,74 @@ Services 1:N BookingServices
 
 > Исходные данные содержали повторяющиеся сведения о гостях, номерах, категориях, бронированиях и услугах. Для устранения избыточности данные были разделены на отдельные сущности. Связь многие-ко-многим между бронированиями и услугами реализована через таблицу BookingServices. Стоимость услуги хранится в BookingServices, так как в исходных данных стоимость одной и той же услуги может различаться. Полученная структура соответствует третьей нормальной форме.
 
+### 1.3 импорт
+Из Excel в CSV
+1. Открой файл в Excel.
+2. Файл → Сохранить как.
+3. Тип: CSV UTF-8 (*.csv).
+4. Сохрани файл.
+Из CSV в SQL Server
+1. В SSMS: ПКМ по базе → Задачи → Импорт данных...
+2. Источник: Flat File Source.
+3. Выбери .csv.
+4. Укажи правильный разделитель: ;, , или Tab — как в самом файле.
+5. Отметь, что первая строка содержит названия столбцов.
+6. Назначение — твоя база SQL Server.
+7. Таблицу назови, например, RawImport.
+8. Далее → Готово.
+
+И потом уже в БД
+```sql
+INSERT INTO dbo.Guests(GuestName, Passport, Phone)
+SELECT DISTINCT Gost, Pasport, Telefon
+FROM dbo.RawImport;
+
+INSERT INTO dbo.Categories(CategoryName, PricePerDay)
+SELECT DISTINCT Kategoriya, Cena_za_sutki
+FROM dbo.RawImport;
+
+INSERT INTO dbo.Rooms(RoomNumber, CategoryID)
+SELECT DISTINCT
+    r.Nomer_komnaty,
+    c.CategoryID
+FROM dbo.RawImport r
+JOIN dbo.Categories c ON c.CategoryName = r.Kategoriya;
+
+INSERT INTO dbo.Services(ServiceName, ServicePrice)
+SELECT DISTINCT Usluga, Stoimost_uslugi
+FROM dbo.RawImport;
+
+INSERT INTO dbo.Bookings(BookingID, BookingDate, GuestID, RoomID, CheckInDate, CheckOutDate, Total)
+SELECT DISTINCT
+    r.Nomer_broni,
+    r.Data_broni,
+    g.GuestID,
+    rm.RoomID,
+    r.Data_zaezda,
+    r.Data_vyezda,
+    r.Itogo
+FROM dbo.RawImport r
+JOIN dbo.Guests g ON g.Passport = r.Pasport
+JOIN dbo.Rooms rm ON rm.RoomNumber = r.Nomer_komnaty;
+
+INSERT INTO dbo.BookingServices(BookingID, ServiceID)
+SELECT
+    r.Nomer_broni,
+    s.ServiceID
+FROM dbo.RawImport r
+JOIN dbo.Services s ON s.ServiceName = r.Usluga;
+
+SELECT * FROM dbo.Guests;
+SELECT * FROM dbo.Categories;
+SELECT * FROM dbo.Rooms;
+SELECT * FROM dbo.Services;
+SELECT * FROM dbo.Bookings;
+SELECT * FROM dbo.BookingServices;
+```
 ### 1.4 Создание таблиц
 
 ```sql
-USE [ИМЯ_ВАШЕЙ_БАЗЫ];
+USE [ИМЯ_БАЗЫ];
 GO
 
 DROP TABLE IF EXISTS dbo.BookingServices;
